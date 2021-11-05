@@ -20,7 +20,7 @@ sudo apt-get install python3-pip
 
 From there, use the `pip3` command to install the necessary dependencies:
 ```
-pip3 install paho-mqtt
+pip3 install paho-mqtt python-dotenv
 ```
 
 It is also required that you enable the 1-Wire interface in order to read from the DS18B20 sensor. Personally, I recommend configuring `/boot/config.txt` by adding the following lines:
@@ -61,3 +61,5 @@ The example configuration file contains the following entries:
    - `F` (Fahrenheit)
    - `K` (Kelvin)
 - `PRECISION` _(Default: **3**)_: The number of decimal points to include in the payload temperature.
+- `LOOP_DELAY` _(Default: **10**)_: The delay, in seconds, between sensor readings and MQTT messages published to the broker.
+   Note: Using the value **0** will read from the sensor and publish updates to the broker as frequently as possible.
