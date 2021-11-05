@@ -29,7 +29,7 @@ dtoverlay=w1-gpio,gpiopin=17
 dtoverlay=gpio-poweroff,gpiopin=27,active_low
 ```
 
-This will enable the 1-Wire bus on GPIO BCM pin 17, and enable GPIO BCM pin 27 to output a high signal. Doing this will allow a DS18B20 sensor (with a 4.7 kΩ resistor) to be plugged directly into a female GPIO header without the need for jumper wires. The intended use is to plug the component into the GPIO header with the negative, data, and positive pins on the physical GPIO pins 9, 11, and 13, respectively.
+This will enable the 1-Wire bus on GPIO BCM pin 17, and enable GPIO BCM pin 27 to output a high signal. This allows the DS18B20 sensor (with a 4.7 kΩ resistor) to be plugged directly into a female GPIO header without the need for jumper wires. The intended use is to plug the component into the GPIO header with the negative, data, and positive pins on the physical GPIO pins 9, 11, and 13, respectively.
 
 If you would prefer to use the default 1-Wire pin (BCM pin 4) and connect the positive pin on the DS18B20 component to a dedicated 3.3V pin instead, then you could simply add the following to `/boot/config.txt` instead:
 ```
