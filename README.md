@@ -2,9 +2,11 @@
 An MQTT-publishing DS18B20 temperature sensor utility for Raspberry Pi.
 
 ## Why?
-MQTT is the preferred IoT data transmission protocol that 
+MQTT is the preferred IoT data transmission protocol that follows a publisher-subscriber pattern. This is particularly handy for things like temperature sensors, because multiple sensors can easily be set up with minimal differences in configuration. Each sensor only needs:
+- The address of the MQTT broker.
+- A topic for the MQTT packets. (This is essentially the identifier for the sensor.)
 
-## Installation
+## Setup
 If not already done so, make sure `git` is installed prior to cloning this repository:
 ```
 sudo apt-get install git
@@ -33,3 +35,23 @@ If you would prefer to use the default 1-Wire pin (BCM pin 4) and connect the po
 ```
 dtoverlay=w1-gpio
 ```
+Be sure to reboot the Raspberry Pi after making changes to the boot configuration file.
+
+At this point, the DS18B20 sensor should be set up. Before proceeding, reading from the sensor can be tested by running `python3` to start the Python REPL interface, and executing the following:
+```
+import ds18b20
+ds18b20.readTemperature ()
+```
+Assuming a numerical return value is printed to the Python REPL output, you should be good to go. If an error occurs, or `None` is returned, then there may be an issue with the wiring of the DS18B20 component, or the configuration of the 1-Wire bus.
+
+## Configuration
+The `.env.example` file included in the repository provides a template configuration file that can be used as a starting point. First, copy the file to the real configuration file:
+```
+cp .env.example .env
+```
+Then you can modify the new `.env` configuration file using your file editor of choice.
+
+The example configuration file contains the following entries:
+- `HOST`: The address of the broker, either as an IP address or a hostname.
+- `PORT` _(Default: 1883)_: The port on which the broker is running.
+- `KEEPALIVE` _(Default: 60)_: Maximum period in seconds allowed between communications with the broker. Also controls the period between "heartbeat" pings sent to the broker.
