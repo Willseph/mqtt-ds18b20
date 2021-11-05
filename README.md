@@ -52,6 +52,12 @@ cp .env.example .env
 Then you can modify the new `.env` configuration file using your file editor of choice.
 
 The example configuration file contains the following entries:
-- `HOST`: The address of the broker, either as an IP address or a hostname.
-- `PORT` _(Default: 1883)_: The port on which the broker is running.
-- `KEEPALIVE` _(Default: 60)_: Maximum period in seconds allowed between communications with the broker. Also controls the period between "heartbeat" pings sent to the broker.
+- `HOST` _(Required)_: The address of the broker, either as an IP address or a hostname.
+- `PORT` _(Default: **1883**)_: The port on which the broker is running.
+- `TOPIC` _(Default: **sensor/temperature**)_: The topic used in MQTT messages to the broker. This should be unique between different sensors if multiple sensors are used.
+- `KEEPALIVE` _(Default: **60**)_: Maximum period in seconds allowed between communications with the broker. Also controls the period between "heartbeat" pings sent to the broker.
+- `FORMAT` _(Default: **C**)_: The format used for the payload. The allowed values are:
+   - `C` (Celsius)
+   - `F` (Fahrenheit)
+   - `K` (Kelvin)
+- `PRECISION` _(Default: **3**)_: The number of decimal points to include in the payload temperature.
