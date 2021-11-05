@@ -5,6 +5,7 @@ from dotenv import dotenv_values
 from ds18b20 import readTemperature
 import json
 import paho.mqtt.client as mqtt
+import traceback
 
 
 # CONSTS
@@ -59,7 +60,6 @@ def verifyConfig (config):
 		print("Replace the existing placeholder value with your MQTT broker address or hostname.")
 		valid = False
 
-	# Checking PORT
 	valid = valid and verifyConfigPropertyInt (config, CONFIG_PORT)
 	valid = valid and verifyConfigPropertyString (config, CONFIG_TOPIC)
 	valid = valid and verifyConfigPropertyInt (config, CONFIG_KEEPALIVE, 1)
@@ -68,6 +68,10 @@ def verifyConfig (config):
 	valid = valid and verifyConfigPropertyInt (config, CONFIG_LOOP_DELAY)
 
 	return valid
+
+def beginSensorPublishLoop (client, config):
+	"""Begins the actual loop to read from the sensor, and publish the reading to the MQTT broker."""
+	return # TODO
 
 
 # MAIN
@@ -78,6 +82,30 @@ def main():
 		return
 
 	print("Configuration loaded.")
+	client = mqtt.Client()
+	try:
+		print("Connecting to MQTT broker...")
+		host = config[CONFIG_HOST]
+		port = int(config[CONFIG_PORT])
+		keepalive = int(config[CONFIG_KEEPALIVE])
+		client.connect(host, port, keepalive)
+	except KeyboardInterrupt:
+		print("User cancelled.")
+		return
+	except:
+		print("Could not connect to MQTT broker:")
+		traceback.print_exc()
+		return
+
+	print ("Client connected.")
+	try:
+		beginSensorPublishLoop(client, config)
+	except KeyboardInterrupt:
+		print("User cancelled.")
+	except:
+		traceback.print_exc()
+	finally:
+		client.disconnect()
 
 if __name__ == "__main__":
 	main()
