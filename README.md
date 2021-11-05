@@ -62,4 +62,4 @@ The example configuration file contains the following entries:
    - `K` (Kelvin)
 - `PRECISION` _(Default: **3**)_: The number of decimal points to include in the payload temperature.
 - `LOOP_DELAY` _(Default: **10**)_: The delay, in seconds, between sensor readings and MQTT messages published to the broker.
-   Note: Using the value **0** will read from the sensor and publish updates to the broker as frequently as possible.
+   - Note: Using the value **0** will read from the sensor and publish updates to the broker as frequently as possible.
