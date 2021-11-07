@@ -6,7 +6,7 @@ MQTT is the preferred IoT data transmission protocol that follows a publisher-su
 - The address of the MQTT broker.
 - A topic for the MQTT packets. (This is essentially the identifier for the sensor.)
 
-To see an example of the data sent to the broker, scroll down to the [Example Data](#Example%20Data) section further down.
+To see an example of the data sent to the broker, scroll down to the [Example Data](#example-data) section further down.
 
 ## Setup
 If not already done so, make sure `git` is installed prior to cloning this repository:
@@ -132,4 +132,6 @@ The two topics used in messages sent to the broker are (by default):
 
 When the script starts and first connects to the MQTT broker, the initial `connected` payload message with the `sensor/temperature/status` topic will be sent before any temperature readings.
 
-If the service is manually stopped, or otherwise a non-MQTT related issue occurs (such as an issue occurring with the DS18B20 sensor), the script will attempt to send a final `disconnected` payload message before disconnecting the client. However, prior to the client connecting to the broker, a "last will and testament" message is sent to the broker with the payload `gone`. This message will be sent by the broker to all subscribers if the broker has not received any messages from the service after a period of time.
+If the service is manually stopped, or otherwise a non-MQTT related issue occurs (such as an issue occurring with the DS18B20 sensor), the script will attempt to send a final `disconnected` payload message before disconnecting the client.
+
+Prior to the client connecting to the broker, a "last will and testament" message is sent to the broker with the payload `gone`. This message will be sent by the broker to all subscribers if the broker has not received any messages from the service after a period of time.
