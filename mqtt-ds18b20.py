@@ -4,7 +4,10 @@
 from dotenv import dotenv_values
 from ds18b20 import readTemperature
 import json
+import os
 import paho.mqtt.client as mqtt
+import signal
+import sys
 import time
 import traceback
 
@@ -25,7 +28,18 @@ HOST_PLACEHOLDER = "X.X.X.X"
 FORMATS = ["C", "F", "K"]
 
 
+# GLOBALS
+signalKilled = False
+
+
 # FUNCTIONS
+def scriptDir():
+	return os.path.dirname(os.path.realpath(__file__))
+
+def handleSignalKilled(signum, frame):
+	global signalKilled
+	signalKilled = True
+
 def verifyConfigPropertyString (config, key, validValues=None):
 	if not key in config or not config[key]:
 		print("Missing config value: %s" % (key))
@@ -129,15 +143,18 @@ def readFromSensorAndPublish(client, config):
 
 def beginSensorPublishLoop (client, config):
 	"""Begins the actual loop to read from the sensor, and publish the reading to the MQTT broker."""
+	global signalKilled
 	loopDelay = float(config[CONFIG_LOOP_DELAY])
 	while True:
+		if signalKilled:
+			raise ValueError("Detected sigkill, stopping script.")
 		readFromSensorAndPublish(client, config)
 		time.sleep(loopDelay)
 
 
 # MAIN
 def main():
-	config = dotenv_values(".env")
+	config = dotenv_values(os.path.join(scriptDir(), ".env"))
 	if not verifyConfig(config):
 		print("Error with configuration. Check logs and README.md file for issues.")
 		return
@@ -170,17 +187,24 @@ def main():
 	print("Client connected.")
 	client.publish(statusTopic, config[CONFIG_STATUS_CONNECTED], retain=True)
 
+	signal.signal(signal.SIGINT, handleSignalKilled)
+	signal.signal(signal.SIGTERM, handleSignalKilled)
+
 	print("Beginning sensor reading and publish loop...")
+	error = False
 	try:
 		beginSensorPublishLoop(client, config)
 	except KeyboardInterrupt:
 		print("User cancelled.")
 	except:
+		error = True
 		traceback.print_exc()
 	finally:
 		print("Disconnecting client...")
 		client.publish(statusTopic, config[CONFIG_STATUS_DISCONNECTED], retain=True)
 		client.disconnect()
+		if error:
+			sys.exit(1)
 
 if __name__ == "__main__":
 	main()

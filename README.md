@@ -6,6 +6,8 @@ MQTT is the preferred IoT data transmission protocol that follows a publisher-su
 - The address of the MQTT broker.
 - A topic for the MQTT packets. (This is essentially the identifier for the sensor.)
 
+To see an example of the data sent to the broker, scroll down to the [Example Data](#Example%20Data) section further down.
+
 ## Setup
 If not already done so, make sure `git` is installed prior to cloning this repository:
 ```
@@ -21,6 +23,11 @@ sudo apt-get install python3-pip
 From there, use the `pip3` command to install the necessary dependencies:
 ```
 pip3 install paho-mqtt python-dotenv
+```
+
+Also, because of the way `pip3` works, you may also need to install the dependencies in a **sudo** context as well in order for the service to run later on:
+```
+sudo pip3 install paho-mqtt python-dotenv
 ```
 
 It is also required that you enable the 1-Wire interface in order to read from the DS18B20 sensor. Personally, I recommend configuring `/boot/config.txt` by adding the following lines:
@@ -68,3 +75,61 @@ The example configuration file contains the following entries:
 - `STATUS_CONNECTED` _(Default: **connected**)_: The payload included in the status update sent after connecting to the broker.
 - `STATUS_DISCONNECTED` _(Default: **disconnected**)_: The payload included in the status update sent after connecting to the broker.
 - `STATUS_LWT` _(Default: **gone**)_: The payload included in the "last will" message sent to the broker prior to connection.
+
+## Service
+After configuring the settings in the `.env` file, the service can finally be enabled. Beforehand, it's recommended that you manually test the script first by running it as-is:
+```
+./mqtt-ds18b20.py
+```
+Assuming the output looks something like this:
+```
+Configuration loaded.
+Checking for DS18B20 sensor...
+Sensor read successful.
+Connecting to MQTT broker at _hostname_:_port_
+Client connected.
+Beginning sensor reading and publish loop...
+```
+You can safely assume that the script is correctly configured and running normally. If the script exits right away with some kind of error or stack trace, then you may need to verify your configuration file or wiring.
+
+This repository contains an example systemd unit file that can be copied over to the proper directory, with only a small change required.
+
+First, copy the unit file example to the final location. In most cases, that will be the `/etc/systemd/system` directory:
+```
+sudo cp mqtt-ds18b20.service.example /etc/systemd/system/mqtt-ds18b20.service
+```
+
+From there, you can modify the new `mqtt-ds18b20.service` file. You'll need to modify the following line to replace the example absolute path to the cloned repo:
+```
+ExecStart=/path/to/repo/mqtt-ds18b20/mqtt-ds18b20.py
+```
+
+Finally, with the service unit file added, it can be enabled to start automatically after a reboot:
+```
+sudo systemctl enable mqtt-ds18b20
+```
+You can either reboot the Raspberry Pi to start the service and begin publishing the temperature readings to the MQTT broker, or the service can be started manually without rebooting:
+```
+sudo systemctl start mqtt-ds18b20
+```
+
+## Example Data
+In order to verify that the service is working correctly, subscribers will need to be set up on the two topics used by the service. The topics, subtopics, and payload formats are entirely customizable in the configuration file.
+
+As a basic example, using the default values provided in the `.env.example` configuration, you can expect to see messages like:
+```
+connected
+17.750
+17.875
+17.812
+...
+```
+These can be seen by subscribing to the wildcard topic `sensor/temperature/+`.
+
+The two topics used in messages sent to the broker are (by default):
+- `reading`: Used for the actual temperature readings from the DS18B20 sensor. By default, the values are in Celsius, rounded to three decimal places.
+- `status`: Used for status messages, when the client connects or disconnects from the broker, as well as the "last will and testament" message.
+
+When the script starts and first connects to the MQTT broker, the initial `connected` payload message with the `sensor/temperature/status` topic will be sent before any temperature readings.
+
+If the service is manually stopped, or otherwise a non-MQTT related issue occurs (such as an issue occurring with the DS18B20 sensor), the script will attempt to send a final `disconnected` payload message before disconnecting the client. However, prior to the client connecting to the broker, a "last will and testament" message is sent to the broker with the payload `gone`. This message will be sent by the broker to all subscribers if the broker has not received any messages from the service after a period of time.

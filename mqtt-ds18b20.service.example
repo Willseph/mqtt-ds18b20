@@ -1,0 +1,12 @@
+[Unit]
+Description=MQTT-DS18B20
+After=network.target
+Wants=network-online.target
+
+[Service]
+Restart=always
+Type=simple
+ExecStart=/path/to/repo/mqtt-ds18b20/mqtt-ds18b20.py
+
+[Install]
+WantedBy=multi-user.target
