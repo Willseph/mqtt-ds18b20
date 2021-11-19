@@ -26,6 +26,7 @@ CONFIG_STATUS_DISCONNECTED = "STATUS_DISCONNECTED"
 CONFIG_STATUS_LWT = "STATUS_LWT"
 HOST_PLACEHOLDER = "X.X.X.X"
 FORMATS = ["C", "F", "K"]
+CONN_FAIL_SLEEP = 5
 
 
 # GLOBALS
@@ -78,7 +79,7 @@ def verifyConfigPropertyInt (config, key, minimum=0):
 		print("Value must be greater than or equal to: %d" % (minimum))
 		return False
 	return True
-	
+
 
 def verifyConfig (config):
 	"""Checks the loaded configuration dictionary for invalid or missing values."""
@@ -139,7 +140,10 @@ def readFromSensorAndPublish(client, config):
 	formattedTemp = getFormattedTemperature(client, config)
 	if not formattedTemp:
 		raise ValueError("Could not get temperature.")
-	client.publish(config[CONFIG_TOPIC_READING], formattedTemp, retain=True)
+	topic = config[CONFIG_TOPIC_READING]
+	payload = formattedTemp
+	print("Publishing: %s %s" % (topic, payload))
+	client.publish(topic, payload, retain=True)
 
 def beginSensorPublishLoop (client, config):
 	"""Begins the actual loop to read from the sensor, and publish the reading to the MQTT broker."""
@@ -150,6 +154,11 @@ def beginSensorPublishLoop (client, config):
 			raise ValueError("Detected sigkill, stopping script.")
 		readFromSensorAndPublish(client, config)
 		time.sleep(loopDelay)
+
+
+def handleDisconnection(client, userdata, rc):
+	global signalKilled
+	signalKilled = True
 
 
 # MAIN
@@ -170,6 +179,7 @@ def main():
 	statusTopic = config[CONFIG_TOPIC_STATUS]
 	client = mqtt.Client()
 	client.will_set(statusTopic, config[CONFIG_STATUS_LWT], retain=True)
+	client.on_disconnect = handleDisconnection
 	try:
 		host = config[CONFIG_HOST]
 		port = int(config[CONFIG_PORT])
@@ -182,6 +192,9 @@ def main():
 	except:
 		print("Could not connect to MQTT broker:")
 		traceback.print_exc()
+		print("Waiting %d seconds..." % (CONN_FAIL_SLEEP))
+		time.sleep(CONN_FAIL_SLEEP)
+		sys.exit(1)
 		return
 
 	print("Client connected.")
